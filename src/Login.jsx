@@ -20,10 +20,11 @@ function Login({ onLogin, onSwitchToRegister }) {
         if (data.success) {
           onLogin(data.username, data.userId);
         } else {
-          alert('Invalid credentials');
+          alert('Login failed: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
-        alert('Login failed. Please try again.');
+        console.error('Login error:', error);
+        alert('Login failed. Please check your connection and try again.');
       }
       setLoading(false);
     }

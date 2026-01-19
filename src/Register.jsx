@@ -21,10 +21,11 @@ function Register({ onRegister, onSwitchToLogin }) {
         if (data.success) {
           onRegister(data.username, data.userId);
         } else {
-          alert('Registration failed: ' + data.error);
+          alert('Registration failed: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
-        alert('Registration failed. Please try again.');
+        console.error('Registration error:', error);
+        alert('Registration failed. Please check your connection and try again.');
       }
       setLoading(false);
     }
