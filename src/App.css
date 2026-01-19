@@ -1,0 +1,239 @@
+.App {
+  min-height: 100vh;
+}
+
+.motivation-header {
+  color: black;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.discipline-quote {
+  font-size: 1.5rem;
+  color: aliceblue;
+  font-style: italic;
+  margin: 0 auto;
+  max-width: 800px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.discipline-quote cite {
+  display: block;
+  font-size: 1rem;
+  margin-top: 1rem;
+  font-style: normal;
+  opacity: 0.9;
+}
+
+.date-display {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  color: aliceblue;
+}
+
+.user-info {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: aliceblue;
+}
+
+.logout-btn {
+  background: none;
+  border: 1px solid aliceblue;
+  color: aliceblue;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.logout-btn:hover {
+  background: aliceblue;
+  color: #333;
+}
+
+.task-input {
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.task-input input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.task-input button {
+  padding: 0.5rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.habit-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+
+.habit-table th,
+.habit-table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #333;
+}
+
+.habit-table th {
+  background: #f5f5f5;
+  font-weight: bold;
+  color: #333;
+}
+
+.task-name {
+  background: #f9f9f9;
+  font-weight: bold;
+  text-align: left !important;
+  min-width: 150px;
+  color: #333;
+}
+
+.day-cell {
+  width: 40px;
+}
+
+.day-cell input[type="checkbox"] {
+  transform: scale(1.2);
+}
+
+.progress-row {
+  display: flex;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.progress-label {
+  min-width: 150px;
+  font-weight: bold;
+  text-align: left;
+  padding: 0.5rem;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.progress-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #4CAF50;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin: 0 0.5rem;
+}
+
+.total-progress {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.total-progress h3 {
+  color:aliceblue;
+  margin-bottom: 1rem;
+}
+
+.total-progress-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #4CAF50;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 0 auto;
+}
+
+.action-cell {
+  width: 60px;
+  text-align: center;
+}
+
+.delete-btn {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.delete-btn:hover {
+  background: #cc0000;
+}
+
+.progress-spacer {
+  width: 60px;
+}
+
+main {
+  padding: 2rem 1rem;
+  margin-top: 120px;
+}
+
+.month-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.month-select, .year-select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: white;
+  color: #333;
+}
+
+.current-btn {
+  padding: 0.5rem 1rem;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.current-btn:hover {
+  background: #218838;
+}
