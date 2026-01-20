@@ -11,11 +11,22 @@ function Login({ onLogin, onSwitchToRegister }) {
     if (username.trim() && password.trim()) {
       setLoading(true);
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await fetch('https://habittrack-back-n2krw2ze7-adiths-projects-6dd5238c.vercel.app/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password }),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         if (data.success) {
           onLogin(data.username, data.userId);
@@ -23,10 +34,15 @@ function Login({ onLogin, onSwitchToRegister }) {
           alert('Login failed: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
-        console.error('Login error:', error);
-        alert('Login failed. Please check your connection and try again.');
+        if (error.name === 'AbortError') {
+          alert('Login timed out. Please try again.');
+        } else {
+          console.error('Login error:', error);
+          alert('Login failed: ' + error.message);
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
   };
 
