@@ -12,7 +12,7 @@ function Register({ onRegister, onSwitchToLogin }) {
     if (username.trim() && email.trim() && password.trim()) {
       setLoading(true);
       try {
-        const response = await fetch('https://habittrack-back-okf65sfdm-adiths-projects-6dd5238c.vercel.app/api/register', {
+        const response = await fetch('https://habittrack-back-n2krw2ze7-adiths-projects-6dd5238c.vercel.app/api/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, email, password })
