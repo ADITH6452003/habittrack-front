@@ -38,7 +38,7 @@ function App() {
   const saveDataToBackend = async () => {
     if (!userId) return;
     try {
-      await fetch('https://habittrack-back-n2krw2ze7-adiths-projects-6dd5238c.vercel.app/api/savedata', {
+      await fetch('http://localhost:5000/api/savedata', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,7 +57,7 @@ function App() {
   const loadDataFromBackend = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(`https://habittrack-back-n2krw2ze7-adiths-projects-6dd5238c.vercel.app/api/getdata?userId=${userId}&month=${selectedMonth}&year=${selectedYear}`);
+      const response = await fetch(`http://localhost:5000/api/getdata/${userId}/${selectedMonth}/${selectedYear}`);
       const result = await response.json();
       if (result.success && result.data) {
         setTasks(result.data.tasks || []);
@@ -116,7 +116,7 @@ function App() {
     
     // Delete from all months globally
     try {
-      await fetch('https://habittrack-back-n2krw2ze7-adiths-projects-6dd5238c.vercel.app/api/deletetask', {
+      await fetch('http://localhost:5000/api/deletetask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, taskName })

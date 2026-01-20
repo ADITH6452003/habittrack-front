@@ -14,7 +14,7 @@ function Login({ onLogin, onSwitchToRegister }) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        const response = await fetch('https://habittrack-back-n2krw2ze7-adiths-projects-6dd5238c.vercel.app/api/testlogin', {
+        const response = await fetch('http://localhost:5000/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),
