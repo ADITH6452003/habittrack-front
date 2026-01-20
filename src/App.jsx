@@ -57,7 +57,7 @@ function App() {
   const loadDataFromBackend = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(`https://habittrack-back-okf65sfdm-adiths-projects-6dd5238c.vercel.app/api/getdata/${userId}/${selectedMonth}/${selectedYear}`);
+      const response = await fetch(`https://habittrack-back-okf65sfdm-adiths-projects-6dd5238c.vercel.app/api/getdata?userId=${userId}&month=${selectedMonth}&year=${selectedYear}`);
       const result = await response.json();
       if (result.success && result.data) {
         setTasks(result.data.tasks || []);
