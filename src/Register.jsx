@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './Login.css'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 function Register({ onRegister, onSwitchToLogin }) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -12,7 +14,7 @@ function Register({ onRegister, onSwitchToLogin }) {
     if (username.trim() && email.trim() && password.trim()) {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/register', {
+        const response = await fetch(`${API_BASE}/api/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, email, password })

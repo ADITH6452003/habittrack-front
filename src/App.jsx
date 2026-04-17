@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import Login from './Login'
 import Register from './Register'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState('');
@@ -38,7 +40,7 @@ function App() {
   const saveDataToBackend = async () => {
     if (!userId) return;
     try {
-      await fetch('http://localhost:5000/api/savedata', {
+      await fetch(`${API_BASE}/api/savedata`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,7 +59,7 @@ function App() {
   const loadDataFromBackend = async () => {
     if (!userId) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/getdata/${userId}/${selectedMonth}/${selectedYear}`);
+      const response = await fetch(`${API_BASE}/api/getdata/${userId}/${selectedMonth}/${selectedYear}`);
       const result = await response.json();
       if (result.success && result.data) {
         setTasks(result.data.tasks || []);
@@ -116,7 +118,7 @@ function App() {
     
     // Delete from all months globally
     try {
-      await fetch('http://localhost:5000/api/deletetask', {
+      await fetch(`${API_BASE}/api/deletetask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, taskName })
