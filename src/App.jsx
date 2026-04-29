@@ -64,6 +64,14 @@ function App() {
     }
   }, []);
 
+  // ── Keep backend alive (ping every 5 min) ────────────────────────────────────
+  useEffect(() => {
+    const ping = () => fetch(`${API_BASE}/api/test`).catch(() => {});
+    ping();
+    const id = setInterval(ping, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
   // ── Load user stats ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!userId) return;
