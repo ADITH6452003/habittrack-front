@@ -633,3 +633,191 @@
   .task-input { max-width: 100%; }
   .quote-banner { display: none; }
 }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 0.35rem;
+  width: fit-content;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.45);
+  padding: 0.5rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.tab-btn:hover { color: rgba(255,255,255,0.75); }
+
+.tab-btn.active {
+  background: rgba(124,58,237,0.25);
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+/* ── Burnout warning ── */
+.burnout-warning {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #fca5a5;
+  border-radius: 12px;
+  padding: 0.75rem 1.2rem;
+  font-size: 0.88rem;
+  margin-bottom: 1.2rem;
+  animation: fadeIn 0.4s ease both;
+}
+
+/* ── Streak token badge ── */
+.token-badge {
+  position: relative;
+  background: rgba(167,139,250,0.15);
+  border: 1px solid rgba(167,139,250,0.35);
+  color: #a78bfa;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.token-badge:hover {
+  background: rgba(167,139,250,0.25);
+  transform: scale(1.05);
+}
+
+.token-used-flash {
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #7c3aed;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  animation: fadeIn 0.3s ease both;
+}
+
+/* ── Streak protected banner ── */
+.streak-protected-banner {
+  background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(59,130,246,0.15));
+  border: 1px solid rgba(167,139,250,0.3);
+  color: #c4b5fd;
+  border-radius: 12px;
+  padding: 0.75rem 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  animation: fadeIn 0.4s ease both;
+}
+
+/* ── All done banner ── */
+.all-done-banner {
+  background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(5,150,105,0.1));
+  border: 1px solid rgba(16,185,129,0.3);
+  color: #6ee7b7;
+  border-radius: 12px;
+  padding: 0.75rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  animation: fadeIn 0.4s ease both;
+}
+
+/* ── User points in badge ── */
+.user-points {
+  font-size: 0.75rem;
+  color: #fbbf24;
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+/* ── Category icon in header ── */
+.cat-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.cat-select { max-width: 130px; }
+
+/* ── Habit stacking highlight ── */
+@keyframes stackPulse {
+  0%, 100% { background: transparent; }
+  50%       { background: rgba(167,139,250,0.15); }
+}
+
+th.stack-highlight { animation: stackPulse 0.5s ease 3; }
+
+/* ── Analytics layout ── */
+.analytics-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.analytics-main { display: flex; flex-direction: column; gap: 1.2rem; }
+.analytics-side  { position: sticky; top: 5rem; }
+
+/* ── Social layout ── */
+.social-layout {
+  max-width: 680px;
+}
+
+.social-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.social-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.social-desc {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1.2rem;
+}
+
+.create-contract-btn {
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.2s;
+  box-shadow: 0 4px 15px rgba(124,58,237,0.3);
+}
+
+.create-contract-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+/* ── Responsive analytics ── */
+@media (max-width: 900px) {
+  .analytics-layout { grid-template-columns: 1fr; }
+  .analytics-side   { position: static; }
+}

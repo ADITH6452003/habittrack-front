@@ -1,0 +1,75 @@
+.heatmap-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.6s ease both;
+}
+
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.heatmap-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.35);
+}
+
+.legend-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.heatmap-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.heatmap-month {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.heatmap-month-label {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+}
+
+.heatmap-days {
+  display: grid;
+  grid-template-columns: repeat(7, 10px);
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  cursor: default;
+  transition: transform 0.15s;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.4);
+  z-index: 1;
+}

@@ -1,18 +1,61 @@
-import './App.css'
-import { useState, useEffect } from 'react'
-import Login from './Login'
-import Register from './Register'
+import './App.css';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import confetti from 'canvas-confetti';
+import Login from './Login';
+import Register from './Register';
+import Avatar from './Avatar';
+import HeatmapView from './HeatmapView';
+import VelocityChart from './VelocityChart';
+import ContractModal from './ContractModal';
+import ContractsList from './ContractsList';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+const CATEGORIES = ['fitness', 'learning', 'routine', 'other'];
+const CATEGORY_ICONS = { fitness: '💪', learning: '🧠', routine: '🎯', other: '⭐' };
+
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentUser, setCurrentUser] = useState('');
-  const [userId, setUserId] = useState('');
+  const [isLoggedIn, setIsLoggedIn]     = useState(false);
+  const [currentUser, setCurrentUser]   = useState('');
+  const [userId, setUserId]             = useState('');
   const [showRegister, setShowRegister] = useState(false);
 
+  // Streak & gamification
+  const [streakTokens, setStreakTokens]   = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [avatarStats, setAvatarStats]     = useState({ stamina: 0, intellect: 0, discipline: 0 });
+  const [userPoints, setUserPoints]       = useState(100);
+  const [tokenUsed, setTokenUsed]         = useState(false);
+
+  // Habit data
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear]   = useState(currentDate.getFullYear());
+  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+  const [tasks, setTasks]                 = useState([]);
+  const [taskCategories, setTaskCategories] = useState([]);
+  const [newTask, setNewTask]             = useState('');
+  const [newTaskCategory, setNewTaskCategory] = useState('other');
+  const [checkedTasks, setCheckedTasks]   = useState({});
+  const [addingTask, setAddingTask]       = useState(false);
+
+  // All months data for heatmap
+  const [allMonthsData, setAllMonthsData] = useState({});
+
+  // UI state
+  const [activeTab, setActiveTab]         = useState('tracker'); // tracker | analytics | social
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
+  const prevAllDoneRef = useRef(false);
+
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // ── Session restore ──────────────────────────────────────────────────────────
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
+    const savedUser   = localStorage.getItem('currentUser');
     const savedUserId = localStorage.getItem('userId');
     if (savedUser && savedUserId) {
       setCurrentUser(savedUser);
@@ -21,156 +64,241 @@ function App() {
     }
   }, []);
 
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  });
+  // ── Load user stats ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API_BASE}/api/user-stats/${userId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setStreakTokens(d.streakTokens);
+          setCurrentStreak(d.currentStreak);
+          setAvatarStats(d.avatarStats || { stamina: 0, intellect: 0, discipline: 0 });
+          setUserPoints(d.points);
+        }
+      })
+      .catch(console.error);
+  }, [userId]);
 
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
-  const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-  const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState('');
-  const [checkedTasks, setCheckedTasks] = useState({});
-  const [addingTask, setAddingTask] = useState(false);
+  // ── Load all months for heatmap ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return;
+    const fetchAll = async () => {
+      const results = {};
+      await Promise.all(
+        Array.from({ length: 12 }, (_, i) => i + 1).map(async (m) => {
+          try {
+            const res  = await fetch(`${API_BASE}/api/getdata/${userId}/${m}/${selectedYear}`);
+            const data = await res.json();
+            if (data.success && data.data) results[m] = data.data;
+          } catch {}
+        })
+      );
+      setAllMonthsData(results);
+    };
+    fetchAll();
+  }, [userId, selectedYear]);
 
-  const saveDataToBackend = async () => {
+  // ── Load month data ──────────────────────────────────────────────────────────
+  const loadDataFromBackend = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res    = await fetch(`${API_BASE}/api/getdata/${userId}/${selectedMonth}/${selectedYear}`);
+      const result = await res.json();
+      if (result.success && result.data) {
+        setTasks(result.data.tasks || []);
+        setTaskCategories(result.data.taskCategories || []);
+        setCheckedTasks(result.data.checkedTasks || {});
+      }
+    } catch (err) { console.error('Failed to load data:', err); }
+  }, [userId, selectedMonth, selectedYear]);
+
+  useEffect(() => { if (userId) loadDataFromBackend(); }, [loadDataFromBackend]);
+
+  // ── Save data ────────────────────────────────────────────────────────────────
+  const saveDataToBackend = useCallback(async (t, tc, ct) => {
     if (!userId) return;
     try {
       await fetch(`${API_BASE}/api/savedata`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, tasks, checkedTasks, month: selectedMonth, year: selectedYear })
+        body: JSON.stringify({ userId, tasks: t, taskCategories: tc, checkedTasks: ct, month: selectedMonth, year: selectedYear }),
       });
-    } catch (error) {
-      console.error('Failed to save data:', error);
-    }
-  };
-
-  const loadDataFromBackend = async () => {
-    if (!userId) return;
-    try {
-      const response = await fetch(`${API_BASE}/api/getdata/${userId}/${selectedMonth}/${selectedYear}`);
-      const result = await response.json();
-      if (result.success && result.data) {
-        setTasks(result.data.tasks || []);
-        setCheckedTasks(result.data.checkedTasks || {});
+      // Refresh user stats after save
+      const sr = await fetch(`${API_BASE}/api/user-stats/${userId}`);
+      const sd = await sr.json();
+      if (sd.success) {
+        setStreakTokens(sd.streakTokens);
+        setCurrentStreak(sd.currentStreak);
+        setAvatarStats(sd.avatarStats || { stamina: 0, intellect: 0, discipline: 0 });
       }
-    } catch (error) {
-      console.error('Failed to load data:', error);
+    } catch (err) { console.error('Failed to save data:', err); }
+  }, [userId, selectedMonth, selectedYear]);
+
+  // ── Confetti when all today's habits done ────────────────────────────────────
+  useEffect(() => {
+    const todayIdx = currentDate.getDate() - 1;
+    const isCurrentMonth = selectedMonth === currentDate.getMonth() + 1 && selectedYear === currentDate.getFullYear();
+    if (!isCurrentMonth || tasks.length === 0) return;
+    const allDone = tasks.every((_, ti) => checkedTasks[`${ti}-${todayIdx}`]);
+    if (allDone && !prevAllDoneRef.current) {
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: ['#a78bfa', '#60a5fa', '#34d399', '#fbbf24'] });
     }
-  };
+    prevAllDoneRef.current = allDone;
+  }, [checkedTasks, tasks, selectedMonth, selectedYear]);
 
-  useEffect(() => { if (userId) loadDataFromBackend(); }, [userId, selectedMonth, selectedYear]);
-  useEffect(() => { if (userId) saveDataToBackend(); }, [tasks, checkedTasks]);
-
+  // ── Habit actions ────────────────────────────────────────────────────────────
   const addTask = () => {
-    if (newTask.trim()) {
-      setAddingTask(true);
-      setTimeout(() => setAddingTask(false), 400);
-      setTasks([...tasks, newTask.trim()]);
-      setNewTask('');
-    }
+    if (!newTask.trim()) return;
+    setAddingTask(true);
+    setTimeout(() => setAddingTask(false), 400);
+    const newTasks = [...tasks, newTask.trim()];
+    const newCats  = [...taskCategories, newTaskCategory];
+    setTasks(newTasks);
+    setTaskCategories(newCats);
+    setNewTask('');
+    setNewTaskCategory('other');
+    saveDataToBackend(newTasks, newCats, checkedTasks);
   };
 
   const deleteTask = async (taskIndex) => {
     const taskName = tasks[taskIndex];
     const newTasks = tasks.filter((_, i) => i !== taskIndex);
+    const newCats  = taskCategories.filter((_, i) => i !== taskIndex);
     const newChecked = {};
     Object.keys(checkedTasks).forEach(key => {
       const [ti, di] = key.split('-').map(Number);
-      if (ti < taskIndex) newChecked[key] = checkedTasks[key];
+      if (ti < taskIndex)      newChecked[key] = checkedTasks[key];
       else if (ti > taskIndex) newChecked[`${ti - 1}-${di}`] = checkedTasks[key];
     });
     setTasks(newTasks);
+    setTaskCategories(newCats);
     setCheckedTasks(newChecked);
     try {
       await fetch(`${API_BASE}/api/deletetask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, taskName })
+        body: JSON.stringify({ userId, taskName }),
       });
-    } catch (error) {
-      console.error('Failed to delete task globally:', error);
-    }
+    } catch (err) { console.error('Failed to delete task:', err); }
   };
 
   const handleCheckboxChange = (taskIndex, dayIndex) => {
-    const key = `${taskIndex}-${dayIndex}`;
-    setCheckedTasks(prev => ({ ...prev, [key]: !prev[key] }));
+    const key        = `${taskIndex}-${dayIndex}`;
+    const newChecked = { ...checkedTasks, [key]: !checkedTasks[key] };
+    setCheckedTasks(newChecked);
+    saveDataToBackend(tasks, taskCategories, newChecked);
+
+    // Habit stacking: auto-highlight next unchecked habit
+    if (!checkedTasks[key]) {
+      const nextUnchecked = tasks.findIndex((_, ti) => ti > taskIndex && !newChecked[`${ti}-${dayIndex}`]);
+      if (nextUnchecked !== -1) {
+        const el = document.getElementById(`habit-col-${nextUnchecked}`);
+        if (el) el.classList.add('stack-highlight');
+        setTimeout(() => el?.classList.remove('stack-highlight'), 1500);
+      }
+    }
   };
 
-  const calculateDayProgress = (dayIndex) => {
-    if (tasks.length === 0) return 0;
-    const completed = tasks.filter((_, ti) => checkedTasks[`${ti}-${dayIndex}`]).length;
-    return Math.round((completed / tasks.length) * 100);
+  const useStreakToken = async () => {
+    if (streakTokens < 1) return;
+    try {
+      const res  = await fetch(`${API_BASE}/api/use-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStreakTokens(data.streakTokens);
+        setCurrentStreak(data.currentStreak);
+        setTokenUsed(true);
+        setTimeout(() => setTokenUsed(false), 3000);
+      }
+    } catch (err) { console.error('Failed to use token:', err); }
+  };
+
+  // ── Progress helpers ─────────────────────────────────────────────────────────
+  const calculateDayProgress = (di) => {
+    if (!tasks.length) return 0;
+    return Math.round((tasks.filter((_, ti) => checkedTasks[`${ti}-${di}`]).length / tasks.length) * 100);
   };
 
   const calculateTotalProgress = () => {
-    if (tasks.length === 0) return 0;
-    const total = tasks.length * daysInMonth;
+    if (!tasks.length) return 0;
     const completed = Object.values(checkedTasks).filter(Boolean).length;
-    return Math.round((completed / total) * 100);
+    return Math.round((completed / (tasks.length * daysInMonth)) * 100);
   };
 
   const getTotalCompleted = () => Object.values(checkedTasks).filter(Boolean).length;
 
   const getStreak = () => {
-    const today = new Date();
-    if (today.getMonth() + 1 !== selectedMonth || today.getFullYear() !== selectedYear) return 0;
-    let streak = 0;
-    for (let d = today.getDate() - 1; d >= 0; d--) {
-      const prog = calculateDayProgress(d);
-      if (prog === 100 && tasks.length > 0) streak++;
+    if (selectedMonth !== currentDate.getMonth() + 1 || selectedYear !== currentDate.getFullYear()) return currentStreak;
+    let s = 0;
+    for (let d = currentDate.getDate() - 2; d >= 0; d--) {
+      if (calculateDayProgress(d) === 100 && tasks.length > 0) s++;
       else break;
     }
-    return streak;
+    return s;
+  };
+
+  const getMissedLast7 = () => {
+    const todayIdx = currentDate.getDate() - 1;
+    let missed = 0;
+    for (let d = Math.max(0, todayIdx - 6); d < todayIdx; d++) {
+      if (calculateDayProgress(d) < 100 && tasks.length > 0) missed++;
+    }
+    return missed;
   };
 
   const getDayWithMonth = (day) =>
     new Date(selectedYear, selectedMonth - 1, day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
   const goToCurrentMonth = () => {
-    const now = new Date();
-    setSelectedMonth(now.getMonth() + 1);
-    setSelectedYear(now.getFullYear());
+    setSelectedMonth(currentDate.getMonth() + 1);
+    setSelectedYear(currentDate.getFullYear());
   };
 
-  const handleLogin = (username, userIdFromBackend) => {
-    setCurrentUser(username); setUserId(userIdFromBackend); setIsLoggedIn(true);
+  // ── Auth handlers ────────────────────────────────────────────────────────────
+  const handleLogin = (username, uid, stats = {}) => {
+    setCurrentUser(username); setUserId(uid); setIsLoggedIn(true);
+    if (stats.streakTokens  !== undefined) setStreakTokens(stats.streakTokens);
+    if (stats.currentStreak !== undefined) setCurrentStreak(stats.currentStreak);
+    if (stats.avatarStats)   setAvatarStats(stats.avatarStats);
+    if (stats.points        !== undefined) setUserPoints(stats.points);
     localStorage.setItem('currentUser', username);
-    localStorage.setItem('userId', userIdFromBackend);
-  };
-
-  const handleRegister = (username, userIdFromBackend) => {
-    setCurrentUser(username); setUserId(userIdFromBackend); setIsLoggedIn(true);
-    localStorage.setItem('currentUser', username);
-    localStorage.setItem('userId', userIdFromBackend);
+    localStorage.setItem('userId', uid);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false); setCurrentUser(''); setUserId('');
-    setTasks([]); setCheckedTasks({});
+    setTasks([]); setTaskCategories([]); setCheckedTasks({});
+    setStreakTokens(0); setCurrentStreak(0);
+    setAvatarStats({ stamina: 0, intellect: 0, discipline: 0 });
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userId');
   };
 
   if (!isLoggedIn) {
     return showRegister
-      ? <Register onRegister={handleRegister} onSwitchToLogin={() => setShowRegister(false)} />
-      : <Login onLogin={handleLogin} onSwitchToRegister={() => setShowRegister(true)} />;
+      ? <Register onRegister={(u, id) => handleLogin(u, id)} onSwitchToLogin={() => setShowRegister(false)} />
+      : <Login onLogin={(u, id, stats) => handleLogin(u, id, stats)} onSwitchToRegister={() => setShowRegister(true)} />;
   }
 
   const totalProgress = calculateTotalProgress();
-  const streak = getStreak();
+  const streak        = getStreak();
+  const missedLast7   = getMissedLast7();
+  const todayIdx      = currentDate.getDate() - 1;
+  const todayAllDone  = tasks.length > 0 && tasks.every((_, ti) => checkedTasks[`${ti}-${todayIdx}`]);
+  const fatigued      = missedLast7 >= 4;
 
   return (
     <div className="app">
-      {/* Animated background orbs */}
       <div className="bg-orb orb1" />
       <div className="bg-orb orb2" />
       <div className="bg-orb orb3" />
 
+      {/* ── Header ── */}
       <header className="header">
         <div className="header-left">
           <div className="header-logo">
@@ -190,9 +318,16 @@ function App() {
           </div>
         </div>
         <div className="header-right">
+          {/* Streak token badge */}
+          {streakTokens > 0 && (
+            <button className="token-badge" onClick={useStreakToken} title="Use token to protect streak">
+              🛡️ {streakTokens} {tokenUsed && <span className="token-used-flash">Streak Protected!</span>}
+            </button>
+          )}
           <div className="user-badge">
             <span className="user-avatar">{currentUser[0]?.toUpperCase()}</span>
             <span className="user-name">{currentUser}</span>
+            <span className="user-points">⭐ {userPoints}</span>
           </div>
           <button onClick={handleLogout} className="logout-btn">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -206,13 +341,25 @@ function App() {
       </header>
 
       <main className="main">
-        {/* Quote */}
+        {/* ── Quote ── */}
         <div className="quote-banner">
           <span className="quote-icon">"</span>
           <p>If you want to shine like the SUN, be ready to burn like one.</p>
         </div>
 
-        {/* Stat cards */}
+        {/* ── Burnout warning ── */}
+        {fatigued && (
+          <div className="burnout-warning">
+            ⚠️ Burnout Risk: High — you've missed {missedLast7} of the last 7 days. Take it easy or use a streak token!
+          </div>
+        )}
+
+        {/* ── Token used flash ── */}
+        {tokenUsed && (
+          <div className="streak-protected-banner">🔥 Streak Protected! Token used successfully.</div>
+        )}
+
+        {/* ── Stat cards ── */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon purple">
@@ -254,13 +401,13 @@ function App() {
               </svg>
             </div>
             <div className="stat-info">
-              <span className="stat-value">{streak}</span>
-              <span className="stat-label">Day Streak 🔥</span>
+              <span className="stat-value">{streak} 🔥</span>
+              <span className="stat-label">Day Streak</span>
             </div>
           </div>
         </div>
 
-        {/* Progress bar */}
+        {/* ── Progress bar ── */}
         <div className="progress-banner">
           <div className="progress-banner-header">
             <span>Monthly Completion</span>
@@ -271,135 +418,208 @@ function App() {
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="controls-row">
-          <div className="month-nav">
-            <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="dark-select">
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {new Date(2024, i).toLocaleDateString('en-US', { month: 'long' })}
-                </option>
-              ))}
-            </select>
-            <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="dark-select">
-              {Array.from({ length: 10 }, (_, i) => (
-                <option key={2020 + i} value={2020 + i}>{2020 + i}</option>
-              ))}
-            </select>
-            <button onClick={goToCurrentMonth} className="today-btn">Today</button>
-          </div>
-
-          <div className="task-input">
-            <input
-              type="text"
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && addTask()}
-              placeholder="Add a new habit..."
-              className="task-input-field"
-            />
-            <button onClick={addTask} className={`add-btn ${addingTask ? 'pop' : ''}`}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              Add
+        {/* ── Tabs ── */}
+        <div className="tabs">
+          {['tracker', 'analytics', 'social'].map(tab => (
+            <button
+              key={tab}
+              className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'tracker' ? '📋 Tracker' : tab === 'analytics' ? '📊 Analytics' : '🤝 Social'}
             </button>
-          </div>
+          ))}
         </div>
 
-        {/* Table */}
-        {tasks.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">🎯</div>
-            <p>No habits yet. Add your first habit above!</p>
-          </div>
-        ) : (
-          <div className="table-wrapper">
-            <div className="table-container">
-              <table className="habit-table">
-                <thead>
-                  <tr>
-                    <th className="task-col">Day</th>
-                    {tasks.map((task, ti) => (
-                      <th key={ti}>
-                        <div className="habit-header-cell">
-                          <span className="task-dot" style={{ background: `hsl(${(ti * 47) % 360}, 70%, 60%)` }} />
-                          <span>{task}</span>
-                          <button onClick={() => deleteTask(ti)} className="delete-btn-inline">✕</button>
-                        </div>
-                        <div className="col-progress-track">
-                          <div
-                            className="col-progress-fill"
-                            style={{
-                              width: `${Math.round((Array.from({ length: daysInMonth }, (_, di) => checkedTasks[`${ti}-${di}`] ? 1 : 0).reduce((a, b) => a + b, 0) / daysInMonth) * 100)}%`,
-                              background: `hsl(${(ti * 47) % 360}, 70%, 55%)`
-                            }}
-                          />
-                        </div>
-                      </th>
-                    ))}
-                    <th className="progress-col">Done %</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: daysInMonth }, (_, di) => {
-                    const d = new Date(selectedYear, selectedMonth - 1, di + 1);
-                    const isToday = d.toDateString() === new Date().toDateString();
-                    const pct = calculateDayProgress(di);
-                    return (
-                      <tr key={di} className={`task-row ${isToday ? 'today-row' : ''}`}>
-                        <td className="task-name-cell">
-                          <div className="task-name-wrap">
-                            {isToday && <span className="today-badge">Today</span>}
-                            <span>{getDayWithMonth(di + 1)}</span>
-                          </div>
-                        </td>
-                        {tasks.map((_, ti) => {
-                          const checked = checkedTasks[`${ti}-${di}`] || false;
-                          const disabled = !isToday;
-                          return (
-                            <td key={ti} className={`day-cell ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}`}>
-                              <label className={`custom-checkbox ${disabled ? 'disabled' : ''}`}>
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={() => !disabled && handleCheckboxChange(ti, di)}
-                                  disabled={disabled}
-                                />
-                                <span className="checkmark">
-                                  {checked && (
-                                    <svg viewBox="0 0 12 12" fill="none">
-                                      <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                  )}
-                                </span>
-                              </label>
-                            </td>
-                          );
-                        })}
-                        <td className="progress-cell">
-                          <div
-                            className="day-progress-pill"
-                            style={{
-                              background: pct === 100
-                                ? 'linear-gradient(135deg,#10b981,#059669)'
-                                : pct > 0
-                                  ? 'linear-gradient(135deg,#7c3aed,#3b82f6)'
-                                  : 'rgba(255,255,255,0.05)'
-                            }}
-                          >
-                            {pct > 0 ? `${pct}%` : '–'}
-                          </div>
-                        </td>
+        {/* ══════════════ TRACKER TAB ══════════════ */}
+        {activeTab === 'tracker' && (
+          <>
+            {/* Controls */}
+            <div className="controls-row">
+              <div className="month-nav">
+                <select value={selectedMonth} onChange={(e) => setSelectedMonth(parseInt(e.target.value))} className="dark-select">
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {new Date(2024, i).toLocaleDateString('en-US', { month: 'long' })}
+                    </option>
+                  ))}
+                </select>
+                <select value={selectedYear} onChange={(e) => setSelectedYear(parseInt(e.target.value))} className="dark-select">
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <option key={2020 + i} value={2020 + i}>{2020 + i}</option>
+                  ))}
+                </select>
+                <button onClick={goToCurrentMonth} className="today-btn">Today</button>
+              </div>
+
+              <div className="task-input">
+                <select value={newTaskCategory} onChange={(e) => setNewTaskCategory(e.target.value)} className="dark-select cat-select">
+                  {CATEGORIES.map(c => (
+                    <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={newTask}
+                  onChange={(e) => setNewTask(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                  placeholder="Add a new habit..."
+                  className="task-input-field"
+                />
+                <button onClick={addTask} className={`add-btn ${addingTask ? 'pop' : ''}`}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+
+            {/* Today completion banner */}
+            {todayAllDone && tasks.length > 0 && (
+              <div className="all-done-banner">🎉 All habits done for today! Amazing work!</div>
+            )}
+
+            {tasks.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">🎯</div>
+                <p>No habits yet. Add your first habit above!</p>
+              </div>
+            ) : (
+              <div className="table-wrapper">
+                <div className="table-container">
+                  <table className="habit-table">
+                    <thead>
+                      <tr>
+                        <th className="task-col">Day</th>
+                        {tasks.map((task, ti) => (
+                          <th key={ti} id={`habit-col-${ti}`}>
+                            <div className="habit-header-cell">
+                              <span className="cat-icon">{CATEGORY_ICONS[taskCategories[ti] || 'other']}</span>
+                              <span className="task-dot" style={{ background: `hsl(${(ti * 47) % 360}, 70%, 60%)` }} />
+                              <span>{task}</span>
+                              <button onClick={() => deleteTask(ti)} className="delete-btn-inline">✕</button>
+                            </div>
+                            <div className="col-progress-track">
+                              <div
+                                className="col-progress-fill"
+                                style={{
+                                  width: `${Math.round((Array.from({ length: daysInMonth }, (_, di) => checkedTasks[`${ti}-${di}`] ? 1 : 0).reduce((a, b) => a + b, 0) / daysInMonth) * 100)}%`,
+                                  background: `hsl(${(ti * 47) % 360}, 70%, 55%)`
+                                }}
+                              />
+                            </div>
+                          </th>
+                        ))}
+                        <th className="progress-col">Done %</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: daysInMonth }, (_, di) => {
+                        const d       = new Date(selectedYear, selectedMonth - 1, di + 1);
+                        const isToday = d.toDateString() === new Date().toDateString();
+                        const pct     = calculateDayProgress(di);
+                        return (
+                          <tr key={di} className={`task-row ${isToday ? 'today-row' : ''}`}>
+                            <td className="task-name-cell">
+                              <div className="task-name-wrap">
+                                {isToday && <span className="today-badge">Today</span>}
+                                <span>{getDayWithMonth(di + 1)}</span>
+                              </div>
+                            </td>
+                            {tasks.map((_, ti) => {
+                              const checked  = checkedTasks[`${ti}-${di}`] || false;
+                              const disabled = !isToday;
+                              return (
+                                <td key={ti} className={`day-cell ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}`}>
+                                  <label className={`custom-checkbox ${disabled ? 'disabled' : ''}`}>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => !disabled && handleCheckboxChange(ti, di)}
+                                      disabled={disabled}
+                                    />
+                                    <span className="checkmark">
+                                      {checked && (
+                                        <svg viewBox="0 0 12 12" fill="none">
+                                          <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                        </svg>
+                                      )}
+                                    </span>
+                                  </label>
+                                </td>
+                              );
+                            })}
+                            <td className="progress-cell">
+                              <div
+                                className="day-progress-pill"
+                                style={{
+                                  background: pct === 100
+                                    ? 'linear-gradient(135deg,#10b981,#059669)'
+                                    : pct > 0
+                                      ? 'linear-gradient(135deg,#7c3aed,#3b82f6)'
+                                      : 'rgba(255,255,255,0.05)'
+                                }}
+                              >
+                                {pct > 0 ? `${pct}%` : '–'}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ══════════════ ANALYTICS TAB ══════════════ */}
+        {activeTab === 'analytics' && (
+          <div className="analytics-layout">
+            <div className="analytics-main">
+              <HeatmapView year={selectedYear} allMonthsData={allMonthsData} tasks={tasks} />
+              <VelocityChart
+                checkedTasks={checkedTasks}
+                tasks={tasks}
+                daysInMonth={daysInMonth}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+              />
+            </div>
+            <div className="analytics-side">
+              <Avatar stats={avatarStats} streak={streak} fatigued={fatigued} />
             </div>
           </div>
         )}
+
+        {/* ══════════════ SOCIAL TAB ══════════════ */}
+        {activeTab === 'social' && (
+          <div className="social-layout">
+            <div className="social-header-row">
+              <h2 className="social-title">🤝 Accountability Vault</h2>
+              <button className="create-contract-btn" onClick={() => setShowContractModal(true)}>
+                + New Contract
+              </button>
+            </div>
+            <p className="social-desc">
+              Stake your points on a habit. If you fail, your friend gets the points. Loss aversion = motivation.
+            </p>
+            <ContractsList userId={userId} API_BASE={API_BASE} />
+          </div>
+        )}
       </main>
+
+      {showContractModal && (
+        <ContractModal
+          userId={userId}
+          userPoints={userPoints}
+          API_BASE={API_BASE}
+          onClose={() => setShowContractModal(false)}
+          onContractCreated={(_, remaining) => setUserPoints(remaining)}
+        />
+      )}
     </div>
   );
 }
