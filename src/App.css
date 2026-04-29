@@ -435,19 +435,60 @@
 .habit-table thead th.task-col {
   text-align: left;
   padding-left: 1.2rem;
-  min-width: 180px;
+  min-width: 110px;
   position: sticky;
   left: 0;
   background: #111118;
   z-index: 2;
 }
 
-.habit-table thead th.today-col {
-  color: #a78bfa;
-  background: rgba(124,58,237,0.12);
+.habit-table thead th.progress-col {
+  min-width: 70px;
 }
 
-.habit-table thead th.action-col { min-width: 50px; }
+.habit-header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  padding-bottom: 0.3rem;
+}
+
+.delete-btn-inline {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #f87171;
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.delete-btn-inline:hover {
+  background: rgba(239,68,68,0.3);
+  transform: scale(1.15);
+}
+
+.col-progress-track {
+  height: 3px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.3rem;
+}
+
+.col-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s ease;
+}
 
 /* Task rows */
 .task-row {
@@ -458,46 +499,48 @@
 .task-row:hover { background: rgba(255,255,255,0.03); }
 .task-row:last-child { border-bottom: none; }
 
+.today-row { background: rgba(124,58,237,0.07) !important; }
+.today-row:hover { background: rgba(124,58,237,0.12) !important; }
+
+.today-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  color: #fff;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .task-name-cell {
-  padding: 0.6rem 0.5rem 0.6rem 1.2rem;
+  padding: 0.5rem 0.5rem 0.5rem 1.2rem;
   text-align: left;
   position: sticky;
   left: 0;
   background: #0d0d14;
   z-index: 1;
-  min-width: 180px;
+  min-width: 110px;
   transition: background 0.2s;
 }
 
 .task-row:hover .task-name-cell { background: #111118; }
+.today-row .task-name-cell { background: rgba(20,15,40,0.95); }
 
 .task-name-wrap {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.88rem;
+  gap: 0.4rem;
+  font-size: 0.82rem;
   font-weight: 500;
   color: #e2e8f0;
-  margin-bottom: 0.3rem;
+  white-space: nowrap;
 }
 
 .task-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
-}
-
-.row-progress-track {
-  height: 3px;
-  background: rgba(255,255,255,0.07);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.row-progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.6s ease;
 }
 
 /* Day cells */
@@ -537,58 +580,22 @@
   transform: scale(1.1);
 }
 
-.custom-checkbox:hover .checkmark {
+.custom-checkbox:hover:not(.disabled) .checkmark {
   border-color: rgba(167,139,250,0.5);
   background: rgba(124,58,237,0.1);
 }
 
-/* Action cell */
-.action-cell {
-  text-align: center;
-  padding: 0.4rem;
-  min-width: 50px;
-}
+.custom-checkbox.disabled { cursor: not-allowed; }
 
-.delete-btn {
-  background: rgba(239,68,68,0.1);
-  border: 1px solid rgba(239,68,68,0.2);
-  color: #f87171;
-  width: 28px; height: 28px;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.delete-btn:hover {
-  background: rgba(239,68,68,0.25);
-  transform: scale(1.1);
-}
-
-/* Progress footer row */
-.progress-row td {
-  padding: 0.5rem 0.25rem;
+.custom-checkbox.disabled .checkmark {
+  border-color: rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.02);
-  border-top: 1px solid rgba(255,255,255,0.07);
+  opacity: 0.4;
 }
 
-.progress-label-cell {
-  padding-left: 1.2rem !important;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.35);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  position: sticky;
-  left: 0;
-  background: rgba(13,13,20,0.95);
-  z-index: 1;
-}
+.day-cell.disabled { opacity: 0.45; }
 
-.progress-cell { text-align: center; }
+.progress-cell { text-align: center; padding: 0.4rem 0.25rem; }
 
 .day-progress-pill {
   display: inline-flex;

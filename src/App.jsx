@@ -319,45 +319,52 @@ function App() {
               <table className="habit-table">
                 <thead>
                   <tr>
-                    <th className="task-col">Habit</th>
-                    {Array.from({ length: daysInMonth }, (_, i) => {
-                      const d = new Date(selectedYear, selectedMonth - 1, i + 1);
-                      const isToday = d.toDateString() === new Date().toDateString();
-                      return (
-                        <th key={i} className={isToday ? 'today-col' : ''}>
-                          {getDayWithMonth(i + 1)}
-                        </th>
-                      );
-                    })}
-                    <th className="action-col">Del</th>
+                    <th className="task-col">Day</th>
+                    {tasks.map((task, ti) => (
+                      <th key={ti}>
+                        <div className="habit-header-cell">
+                          <span className="task-dot" style={{ background: `hsl(${(ti * 47) % 360}, 70%, 60%)` }} />
+                          <span>{task}</span>
+                          <button onClick={() => deleteTask(ti)} className="delete-btn-inline">✕</button>
+                        </div>
+                        <div className="col-progress-track">
+                          <div
+                            className="col-progress-fill"
+                            style={{
+                              width: `${Math.round((Array.from({ length: daysInMonth }, (_, di) => checkedTasks[`${ti}-${di}`] ? 1 : 0).reduce((a, b) => a + b, 0) / daysInMonth) * 100)}%`,
+                              background: `hsl(${(ti * 47) % 360}, 70%, 55%)`
+                            }}
+                          />
+                        </div>
+                      </th>
+                    ))}
+                    <th className="progress-col">Done %</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.map((task, ti) => {
-                    const rowProgress = Math.round(
-                      (Array.from({ length: daysInMonth }, (_, di) => checkedTasks[`${ti}-${di}`] ? 1 : 0)
-                        .reduce((a, b) => a + b, 0) / daysInMonth) * 100
-                    );
+                  {Array.from({ length: daysInMonth }, (_, di) => {
+                    const d = new Date(selectedYear, selectedMonth - 1, di + 1);
+                    const isToday = d.toDateString() === new Date().toDateString();
+                    const pct = calculateDayProgress(di);
                     return (
-                      <tr key={ti} className="task-row">
+                      <tr key={di} className={`task-row ${isToday ? 'today-row' : ''}`}>
                         <td className="task-name-cell">
                           <div className="task-name-wrap">
-                            <span className="task-dot" style={{ background: `hsl(${(ti * 47) % 360}, 70%, 60%)` }} />
-                            <span>{task}</span>
-                          </div>
-                          <div className="row-progress-track">
-                            <div className="row-progress-fill" style={{ width: `${rowProgress}%`, background: `hsl(${(ti * 47) % 360}, 70%, 55%)` }} />
+                            {isToday && <span className="today-badge">Today</span>}
+                            <span>{getDayWithMonth(di + 1)}</span>
                           </div>
                         </td>
-                        {Array.from({ length: daysInMonth }, (_, di) => {
+                        {tasks.map((_, ti) => {
                           const checked = checkedTasks[`${ti}-${di}`] || false;
+                          const disabled = !isToday;
                           return (
-                            <td key={di} className={`day-cell ${checked ? 'checked' : ''}`}>
-                              <label className="custom-checkbox">
+                            <td key={ti} className={`day-cell ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}`}>
+                              <label className={`custom-checkbox ${disabled ? 'disabled' : ''}`}>
                                 <input
                                   type="checkbox"
                                   checked={checked}
-                                  onChange={() => handleCheckboxChange(ti, di)}
+                                  onChange={() => !disabled && handleCheckboxChange(ti, di)}
+                                  disabled={disabled}
                                 />
                                 <span className="checkmark">
                                   {checked && (
@@ -370,20 +377,7 @@ function App() {
                             </td>
                           );
                         })}
-                        <td className="action-cell">
-                          <button onClick={() => deleteTask(ti)} className="delete-btn">✕</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="progress-row">
-                    <td className="progress-label-cell">Daily %</td>
-                    {Array.from({ length: daysInMonth }, (_, di) => {
-                      const pct = calculateDayProgress(di);
-                      return (
-                        <td key={di} className="progress-cell">
+                        <td className="progress-cell">
                           <div
                             className="day-progress-pill"
                             style={{
@@ -397,11 +391,10 @@ function App() {
                             {pct > 0 ? `${pct}%` : '–'}
                           </div>
                         </td>
-                      );
-                    })}
-                    <td />
-                  </tr>
-                </tfoot>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </div>
           </div>
