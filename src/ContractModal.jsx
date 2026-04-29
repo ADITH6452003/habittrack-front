@@ -3,26 +3,26 @@ import './ContractModal.css';
 
 export default function ContractModal({ userId, userPoints, onClose, onContractCreated, API_BASE }) {
   const [friendUsername, setFriendUsername] = useState('');
-  const [habitName, setHabitName] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [stakePoints, setStakePoints] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [habitName, setHabitName]           = useState('');
+  const [deadline, setDeadline]             = useState('');
+  const [stakePoints, setStakePoints]       = useState(10);
+  const [loading, setLoading]               = useState(false);
+  const [error, setError]                   = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!friendUsername.trim() || !habitName.trim() || !deadline || stakePoints < 1) {
-      setError('All fields required');
+      setError('All fields are required');
       return;
     }
     if (stakePoints > userPoints) {
-      setError('Insufficient points');
+      setError('You don\'t have enough points');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/api/contracts`, {
+      const res  = await fetch(`${API_BASE}/api/contracts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, friendUsername, habitName, deadline, stakePoints }),
@@ -32,9 +32,9 @@ export default function ContractModal({ userId, userPoints, onClose, onContractC
         onContractCreated(data.contract, data.remainingPoints);
         onClose();
       } else {
-        setError(data.error || 'Failed to create contract');
+        setError(data.error || 'Failed to send challenge');
       }
-    } catch (err) {
+    } catch {
       setError('Network error');
     } finally {
       setLoading(false);
@@ -45,9 +45,14 @@ export default function ContractModal({ userId, userPoints, onClose, onContractC
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Create Accountability Contract</h3>
+          <h3>⚔️ Send Accountability Challenge</h3>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
+
+        <p className="modal-desc">
+          Both you and your friend stake points. You both must mark the habit done before the deadline — or the one who fails loses their stake to the other.
+        </p>
+
         <form onSubmit={handleSubmit} className="modal-form">
           <div className="form-field">
             <label>Friend's Username</label>
@@ -55,12 +60,12 @@ export default function ContractModal({ userId, userPoints, onClose, onContractC
               type="text"
               value={friendUsername}
               onChange={(e) => setFriendUsername(e.target.value)}
-              placeholder="Enter username"
+              placeholder="Enter their username"
               required
             />
           </div>
           <div className="form-field">
-            <label>Habit to Track</label>
+            <label>Shared Habit</label>
             <input
               type="text"
               value={habitName}
@@ -80,7 +85,7 @@ export default function ContractModal({ userId, userPoints, onClose, onContractC
             />
           </div>
           <div className="form-field">
-            <label>Stake Points (you have {userPoints})</label>
+            <label>Stake Points each (you have {userPoints})</label>
             <input
               type="number"
               value={stakePoints}
@@ -90,9 +95,11 @@ export default function ContractModal({ userId, userPoints, onClose, onContractC
               required
             />
           </div>
+
           {error && <div className="form-error">{error}</div>}
+
           <button type="submit" className="modal-submit" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Contract'}
+            {loading ? 'Sending...' : '⚔️ Send Challenge'}
           </button>
         </form>
       </div>

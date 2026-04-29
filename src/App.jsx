@@ -614,7 +614,7 @@ function App() {
             <p className="social-desc">
               Stake your points on a habit. If you fail, your friend gets the points. Loss aversion = motivation.
             </p>
-            <ContractsList userId={userId} API_BASE={API_BASE} />
+            <ContractsList userId={userId} currentUsername={currentUser} API_BASE={API_BASE} onPointsChange={setUserPoints} />
           </div>
         )}
       </main>

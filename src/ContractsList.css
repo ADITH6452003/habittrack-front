@@ -1,70 +1,165 @@
 .contracts-loading, .contracts-empty {
   text-align: center;
-  padding: 2rem;
+  padding: 2.5rem;
   color: rgba(255,255,255,0.35);
   font-size: 0.85rem;
 }
 
-.contracts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.contracts-sections { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.contracts-section { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 0.25rem;
 }
 
+.section-label.incoming    { color: #fbbf24; }
+.section-label.outgoing    { color: rgba(255,255,255,0.35); }
+.section-label.active-label { color: #a78bfa; }
+.section-label.past-label  { color: rgba(255,255,255,0.25); }
+
+/* ── Cards ── */
 .contract-card {
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
   padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
   transition: border-color 0.2s, transform 0.2s;
 }
 
-.contract-card:hover {
-  border-color: rgba(167,139,250,0.2);
-  transform: translateY(-1px);
-}
+.contract-card:hover { transform: translateY(-1px); }
 
-.contract-card.completed { border-color: rgba(52,211,153,0.2); }
-.contract-card.failed    { border-color: rgba(248,113,113,0.2); }
+.contract-card.pending-invite { border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.04); }
+.contract-card.sent-invite    { border-color: rgba(255,255,255,0.1); }
+.contract-card.active         { border-color: rgba(167,139,250,0.25); }
+.contract-card.completed      { border-color: rgba(52,211,153,0.2); }
+.contract-card.failed         { border-color: rgba(248,113,113,0.15); }
 
 .contract-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
 }
 
 .contract-habit {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: #e2e8f0;
 }
 
-.contract-status {
-  font-size: 0.75rem;
-  font-weight: 600;
-}
+.contract-status { font-size: 0.75rem; font-weight: 600; }
+.pending-tag  { color: #fbbf24; }
+.waiting-tag  { color: rgba(255,255,255,0.4); }
+.active-tag   { color: #a78bfa; }
+.done-tag     { color: #34d399; }
+.failed-tag   { color: #f87171; }
 
 .contract-details {
   display: flex;
   gap: 1rem;
   font-size: 0.75rem;
   color: rgba(255,255,255,0.4);
-  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
 }
 
-.contract-complete-btn {
-  background: rgba(52,211,153,0.15);
-  border: 1px solid rgba(52,211,153,0.3);
-  color: #34d399;
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
+.contract-details strong { color: rgba(255,255,255,0.7); }
+
+.contract-invite-note {
   font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
+}
+
+/* ── Accept / Decline ── */
+.contract-actions { display: flex; gap: 0.6rem; }
+
+.accept-btn {
+  flex: 1;
+  background: rgba(52,211,153,0.15);
+  border: 1px solid rgba(52,211,153,0.35);
+  color: #34d399;
+  padding: 0.5rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
-.contract-complete-btn:hover {
-  background: rgba(52,211,153,0.25);
+.accept-btn:hover { background: rgba(52,211,153,0.28); transform: translateY(-1px); }
+
+.decline-btn {
+  flex: 1;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #f87171;
+  padding: 0.5rem;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.decline-btn:hover { background: rgba(239,68,68,0.22); transform: translateY(-1px); }
+
+/* ── Done status row ── */
+.done-status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.done-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.4);
+}
+
+.done-pill.done   { background: rgba(52,211,153,0.15);  color: #34d399; }
+.done-pill.failed { background: rgba(239,68,68,0.1);    color: #f87171; }
+.done-pill.pending { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.35); }
+
+.vs-divider {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.2);
+  font-weight: 700;
+}
+
+/* ── Mark done button ── */
+.mark-done-btn {
+  background: linear-gradient(135deg, #7c3aed, #3b82f6);
+  border: none;
+  color: #fff;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.2s;
+  box-shadow: 0 4px 12px rgba(124,58,237,0.3);
+  align-self: flex-start;
+}
+
+.mark-done-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+.waiting-note {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  font-style: italic;
 }
